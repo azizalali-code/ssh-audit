@@ -1581,9 +1581,7 @@ def main() -> int:
         ret = exitcodes.GOOD
 
         # If JSON output is desired, each target's results will be reported in its own list entry.
-        if aconf.json:
-            print('[', end='')
-
+       
         # Loop through each target in the list.
         target_servers = []
         for _, target in enumerate(aconf.target_list):
@@ -1613,12 +1611,11 @@ def main() -> int:
                 num_processed += 1
                 if num_processed < num_target_servers:
                     if aconf.json:
-                        print(", ", end='')
+                        print("\n", end='')
                     else:
                         print(("-" * 80) + "\n")
 
-        if aconf.json:
-            print(']')
+      
 
         # Send notification that this thread is exiting.  This deletes the thread's local copy of the algorithm databases.
         SSH1_KexDB.thread_exit()
