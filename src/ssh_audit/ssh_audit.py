@@ -739,7 +739,7 @@ def make_policy(aconf: AuditConf, banner: Optional['Banner'], kex: Optional['SSH
     except PermissionError as e:
         # If installed as a Snap package, print a more useful message with potential work-arounds.
         if SNAP_PACKAGE:
-            print(SNAP_PERMISSIONS_ERROR)
+            print(SNAP_PERMISSIONS_ERROR, file=sys.stderr)
             sys.exit(exitcodes.UNKNOWN_ERROR)
         else:
             err = "Error: insufficient permissions: %s" % str(e)
@@ -747,7 +747,7 @@ def make_policy(aconf: AuditConf, banner: Optional['Banner'], kex: Optional['SSH
     if succeeded:
         print("Wrote policy to %s.  Customize as necessary, then run a policy scan with -P option." % aconf.policy_file)
     else:
-        print(err)
+        print(err, file=sys.stderr)
 
 
 def process_commandline(out: OutputBuffer, args: List[str]) -> 'AuditConf':  # pylint: disable=too-many-statements
@@ -945,9 +945,9 @@ def process_commandline(out: OutputBuffer, args: List[str]) -> 'AuditConf':  # p
         except PermissionError as e:
             # If installed as a Snap package, print a more useful message with potential work-arounds.
             if SNAP_PACKAGE:
-                print(SNAP_PERMISSIONS_ERROR)
+                print(SNAP_PERMISSIONS_ERROR, file=sys.stderr)
             else:
-                print("Error: insufficient permissions: %s" % str(e))
+                print("Error: insufficient permissions: %s" % str(e), file=sys.stderr)
             sys.exit(exitcodes.UNKNOWN_ERROR)
 
         # Strip out whitespace from each line in target file, and skip empty lines.
@@ -1154,13 +1154,18 @@ def audit(out: OutputBuffer, aconf: AuditConf, print_target: bool = False) -> in
         err = s.connect()
 
         if err is not None:
-            out.fail(err)
+            # In JSON mode, route errors to stderr so stdout stays valid JSON.
+            if aconf.json:
+                print(err, file=sys.stderr)
+            else:
+                out.fail(err)
 
             # If we're running against multiple targets, return a connection error to the calling worker thread.  Otherwise, write the error message to the console and exit.
             if len(aconf.target_list) > 0:
                 return exitcodes.CONNECTION_ERROR
             else:
-                out.write()
+                if not aconf.json:
+                    out.write()
                 sys.exit(exitcodes.CONNECTION_ERROR)
 
     err = None
@@ -1522,6 +1527,6 @@ if __name__ == '__main__':  # pragma: nocover
         exit_code = main()
     except Exception:
         exit_code = exitcodes.UNKNOWN_ERROR
-        print(traceback.format_exc())
+        print(traceback.format_exc(), file=sys.stderr)
 
     sys.exit(exit_code)

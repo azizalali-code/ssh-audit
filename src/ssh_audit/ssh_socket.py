@@ -140,7 +140,7 @@ class SSH_Socket(ReadBuf, WriteBuf):
                 break
 
             if self.__timeout_set and time_elapsed >= self.__timeout:
-                print("Timeout elapsed.  Terminating...")
+                print("Timeout elapsed.  Terminating...", file=sys.stderr)
                 sys.exit(exitcodes.CONNECTION_ERROR)
 
         # Accept the connection.
